@@ -143,6 +143,14 @@ function fetchAI(strg) {
         }
   
         speechSynthesis.speak(utterance);
+        let r = setInterval(() => {
+          console.log(speechSynthesis.speaking);
+          if (!speechSynthesis.speaking) {
+            clearInterval(r);
+          } else {
+            speechSynthesis.resume();
+          }
+        }, 14000);
         utterance.addEventListener("start", (e) => {
           tapMotionTickerFunction();
           console.log("start speaking");
