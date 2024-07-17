@@ -151,7 +151,7 @@ function fetchAI(strg) {
             speechSynthesis.pause();
             speechSynthesis.resume();
           }
-        }, 13500);
+        }, 13000);
         utterance.addEventListener("start", (e) => {
           tapMotionTickerFunction();
           console.log("start speaking");
