@@ -19,6 +19,11 @@ body {
   background: linear-gradient(45deg, rgba(142, 143, 250, 1) 30%, rgba(194, 217, 255, 1) 42%, rgba(194, 217, 255, 1) 58%, rgba(142, 143, 250, 1) 70%) fixed;
 }
 
+canvas {
+  max-width: 100vw;
+  max-height: 100vh;
+}
+
 @font-face {
   font-family: "Grandstander";
   src: url("../font/Grandstander.ttf");
