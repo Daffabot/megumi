@@ -10,7 +10,7 @@ function fetchAI(strg) {
   console.log("prompt: ", prompt);
   
   // Buat URL dengan prompt yang sudah diubah
-  const url = `https://api.nyxs.pw/ai/character-ai?prompt=${prompt}&gaya=balas%60dengan%60lucu%60dan%60menyenangkan`;
+  const url = `https://api.nyxs.pw/ai/character-ai?prompt=${prompt}&gaya=balas%60dengan%60profesional%60dan%60kalem`;
 
   // Menggunakan fetch API
   fetch(url)
