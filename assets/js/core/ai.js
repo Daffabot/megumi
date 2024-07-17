@@ -145,15 +145,6 @@ function fetchAI(strg) {
         speechSynthesis.speak(utterance);
         utterance.addEventListener("start", (e) => {
           tapMotionTickerFunction();
-          let resu = setInterval(() => {
-          console.log(speechSynthesis.speaking);
-          if (!speechSynthesis.speaking) {
-            clearInterval(resu);
-          } else {
-            speechSynthesis.pause();
-            speechSynthesis.resume();
-          }
-        }, 13500);
           console.log("start speaking");
           go.forEach((goes) => {
             goes.disabled = true;
