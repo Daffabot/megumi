@@ -612,12 +612,14 @@ button.mic:disabled {
   }
   article {
     width: 90vw;
+    right: 5%;
   }
 }
 
 @media (max-width: 400px) {
   article {
     width: 95vw;
+    right: 2%;
   }
 }
 
