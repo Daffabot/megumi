@@ -39,76 +39,70 @@ function fetchAI(strg) {
     });
 }
 
-// Add helper function to check speech recognition support
+// Improved speech recognition check
 function checkSpeechRecognitionSupport() {
-  return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+  return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition);
 }
 
-try {
-  const inner = document.getElementsByClassName("active-mic");
-  const outter = document.getElementsByClassName("active-outter-mic");
-  
-  if (!checkSpeechRecognitionSupport()) {
-    throw new Error('Speech recognition not supported');
-  }
+const inner = document.getElementsByClassName("active-mic");
+const outter = document.getElementsByClassName("active-outter-mic");
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recognition = new SpeechRecognition();
-  recognition.lang = 'id-ID';
-  recognition.continuous = false;
-  recognition.interimResults = false;
+let recognition = null;
+
+try {
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
   
-  recognition.addEventListener("result", (e) => {
-    const transcript = Array.from(e.results)
-      .map((result) => result[0])
-      .map((result) => result.transcript)
-      .join("");
-  
-    inputan.value = transcript;
-    console.log(transcript);
-  });
-  recognition.addEventListener("start", (e) => {
-    inner[0].classList.remove("none");
-    outter[0].classList.remove("none");
-  });
-  recognition.addEventListener("end", (e) => {
-    addChatbot();
-    document.getElementById("user").innerHTML = '<div class="label">User</div><div class="sub">' + inputan.value + '</div>';
-    down();
-    fetchAI(inputan.value);
-    inner[0].classList.add("none");
-    outter[0].classList.add("none");
-  });
-  
-  const buttons = document.querySelectorAll(".mic, .send");
-  buttons.forEach((button) => {
-    button.addEventListener("click", () => {
-      if (button.className === "mic") {
-          recognition.start();
-          go.forEach((goes) => {
-            goes.disabled = true;
-          });
-      } else if (button.className === "send" && inputan.value.trim() !== '') {
-          addChatbot();
-          fetchAI(inputan.value);
-          document.getElementById("user").innerHTML = '<div class="label">User</div><div class="sub">' + inputan.value + '</div>';
-          down();
-          setTimeout(() => {
-            inputan.value = "";
-            go.forEach((goes) => {
-              goes.disabled = true;
-            });
-          }, 100);
-      }
+  if (SpeechRecognitionAPI) {
+    recognition = new SpeechRecognitionAPI();
+    recognition.lang = 'id-ID';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.addEventListener("result", (e) => {
+      const transcript = Array.from(e.results)
+        .map((result) => result[0])
+        .map((result) => result.transcript)
+        .join("");
+    
+      inputan.value = transcript;
+      console.log(transcript);
     });
-  });
-  console.log("input luaran: ", inputan.value);
-  document.querySelector("#input").addEventListener("keypress", function (e) {
-    let key = e.which || e.keyCode;
-    if (key === 13 && inputan.value.trim() !== '') {
-      //Enter button
+
+    recognition.addEventListener("start", (e) => {
+      inner[0].classList.remove("none");
+      outter[0].classList.remove("none");
+    });
+    recognition.addEventListener("end", (e) => {
       addChatbot();
-      console.log("input dalam: ", inputan.value);
+      document.getElementById("user").innerHTML = '<div class="label">User</div><div class="sub">' + inputan.value + '</div>';
+      down();
+      fetchAI(inputan.value);
+      inner[0].classList.add("none");
+      outter[0].classList.add("none");
+    });
+  } else {
+    throw new Error('Speech recognition not supported in this browser');
+  }
+} catch (error) {
+  console.warn('Speech recognition error:', error);
+  // Disable mic functionality
+  const micButton = document.querySelector('.mic');
+  if (micButton) {
+    micButton.style.display = 'none';
+  }
+}
+
+// Modify button click handler to check if recognition exists
+const buttons = document.querySelectorAll(".mic, .send");
+buttons.forEach((button) => {
+  button.addEventListener("click", () => {
+    if (button.className === "mic" && recognition) {
+      recognition.start();
+      go.forEach((goes) => {
+        goes.disabled = true;
+      });
+    } else if (button.className === "send" && inputan.value.trim() !== '') {
+      addChatbot();
       fetchAI(inputan.value);
       document.getElementById("user").innerHTML = '<div class="label">User</div><div class="sub">' + inputan.value + '</div>';
       down();
@@ -120,14 +114,25 @@ try {
       }, 100);
     }
   });
-} catch (error) {
-  console.error('Speech recognition error:', error);
-  // Hide mic button if speech recognition is not supported
-  const micButton = document.querySelector('.mic');
-  if (micButton) {
-    micButton.style.display = 'none';
+});
+
+document.querySelector("#input").addEventListener("keypress", function (e) {
+  let key = e.which || e.keyCode;
+  if (key === 13 && inputan.value.trim() !== '') {
+    //Enter button
+    addChatbot();
+    console.log("input dalam: ", inputan.value);
+    fetchAI(inputan.value);
+    document.getElementById("user").innerHTML = '<div class="label">User</div><div class="sub">' + inputan.value + '</div>';
+    down();
+    setTimeout(() => {
+      inputan.value = "";
+      go.forEach((goes) => {
+        goes.disabled = true;
+      });
+    }, 100);
   }
-}
+});
 
 function tapMotion() {
   model.motion('speak');
