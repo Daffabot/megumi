@@ -38,9 +38,20 @@ function fetchAI(strg) {
       alert("maaf AI sedang error");
     });
 }
+
+// Add helper function to check speech recognition support
+function checkSpeechRecognitionSupport() {
+  return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+}
+
+try {
   const inner = document.getElementsByClassName("active-mic");
   const outter = document.getElementsByClassName("active-outter-mic");
   
+  if (!checkSpeechRecognitionSupport()) {
+    throw new Error('Speech recognition not supported');
+  }
+
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
   recognition.lang = 'id-ID';
@@ -109,89 +120,97 @@ function fetchAI(strg) {
       }, 100);
     }
   });
-
-  function tapMotion() {
-    model.motion('speak');
+} catch (error) {
+  console.error('Speech recognition error:', error);
+  // Hide mic button if speech recognition is not supported
+  const micButton = document.querySelector('.mic');
+  if (micButton) {
+    micButton.style.display = 'none';
   }
-  // Menambahkan fungsi tapMotion ke ticker
-  let tapMotionTickerFunction = () => app.ticker.add(tapMotion);
+}
 
-  // Menghapus fungsi tapMotion dari ticker
-  let removeTapMotion = () => app.ticker.remove(tapMotion);
+function tapMotion() {
+  model.motion('speak');
+}
+// Menambahkan fungsi tapMotion ke ticker
+let tapMotionTickerFunction = () => app.ticker.add(tapMotion);
 
-  function speak(string) {
-    console.log("string luarin: ", string);
-    let voiceGetter = setInterval(function () {
-      let voices = window.speechSynthesis.getVoices();
-      if (voices.length !== 0) {
-        console.log("string dalami: ", string);
-        let utterance = new SpeechSynthesisUtterance();
-        window.speechSynthesis.cancel();
-        utterance.text = string;
-        utterance.lang = "id-ID";
-        utterance.volume = 1; //0-1 interval
-        utterance.rate = 0.8;
-        utterance.pitch = 1; //0-2 interval
-        utterance.voice = voices[182];
-        let voiceName = new RegExp("gadis", "i");
+// Menghapus fungsi tapMotion dari ticker
+let removeTapMotion = () => app.ticker.remove(tapMotion);
+
+function speak(string) {
+  console.log("string luarin: ", string);
+  let voiceGetter = setInterval(function () {
+    let voices = window.speechSynthesis.getVoices();
+    if (voices.length !== 0) {
+      console.log("string dalami: ", string);
+      let utterance = new SpeechSynthesisUtterance();
+      window.speechSynthesis.cancel();
+      utterance.text = string;
+      utterance.lang = "id-ID";
+      utterance.volume = 1; //0-1 interval
+      utterance.rate = 0.8;
+      utterance.pitch = 1; //0-2 interval
+      utterance.voice = voices[182];
+      let voiceName = new RegExp("gadis", "i");
   
-        for (let i = 0; i < window.speechSynthesis.getVoices().length; i++) {
-          if (window.speechSynthesis.getVoices()[i].voiceURI.search(voiceName) != -1) {
-            utterance.voice = window.speechSynthesis.getVoices()[i];
-          }
+      for (let i = 0; i < window.speechSynthesis.getVoices().length; i++) {
+        if (window.speechSynthesis.getVoices()[i].voiceURI.search(voiceName) != -1) {
+          utterance.voice = window.speechSynthesis.getVoices()[i];
         }
-  
-        speechSynthesis.speak(utterance);
-        let r = setInterval(() => {
-          console.log(speechSynthesis.speaking);
-          if (!speechSynthesis.speaking) {
-            clearInterval(r);
-          } else {
-            speechSynthesis.resume();
-          }
-        }, 14000);
-        utterance.addEventListener("start", (e) => {
-          tapMotionTickerFunction();
-          console.log("start speaking");
-          go.forEach((goes) => {
-            goes.disabled = true;
-          });
-        });
-        utterance.addEventListener("end", (e) => {
-          removeTapMotion();
-          go.forEach((goes) => {
-            goes.disabled = false;
-          });
-          chatbotDiv.id = "chatbot" + count;
-          userDiv.id = "user" + count;
-          console.log("Utterance has finished being spoken after " + e.elapsedTime + " milliseconds.");
-          inputan.value = "";
-        });
-        clearInterval(voiceGetter);
       }
-    }, 200);
-  }
+  
+      speechSynthesis.speak(utterance);
+      let r = setInterval(() => {
+        console.log(speechSynthesis.speaking);
+        if (!speechSynthesis.speaking) {
+          clearInterval(r);
+        } else {
+          speechSynthesis.resume();
+        }
+      }, 14000);
+      utterance.addEventListener("start", (e) => {
+        tapMotionTickerFunction();
+        console.log("start speaking");
+        go.forEach((goes) => {
+          goes.disabled = true;
+        });
+      });
+      utterance.addEventListener("end", (e) => {
+        removeTapMotion();
+        go.forEach((goes) => {
+          goes.disabled = false;
+        });
+        chatbotDiv.id = "chatbot" + count;
+        userDiv.id = "user" + count;
+        console.log("Utterance has finished being spoken after " + e.elapsedTime + " milliseconds.");
+        inputan.value = "";
+      });
+      clearInterval(voiceGetter);
+    }
+  }, 200);
+}
 
-  //Menambahkan bubble text
-  const mainDiv = document.getElementById("chat-box");
-  let count = 0;
-  let chatbotDiv;
-  let userDiv;
+//Menambahkan bubble text
+const mainDiv = document.getElementById("chat-box");
+let count = 0;
+let chatbotDiv;
+let userDiv;
 
-  function addChatbot() {
-    count++;
-    userDiv = document.createElement("div");
-    userDiv.id = "user";
-    userDiv.className = "user";
-    mainDiv.appendChild(userDiv);
+function addChatbot() {
+  count++;
+  userDiv = document.createElement("div");
+  userDiv.id = "user";
+  userDiv.className = "user";
+  mainDiv.appendChild(userDiv);
 
-    chatbotDiv = document.createElement("div");
-    chatbotDiv.id = "chatbot";
-    chatbotDiv.className = "chatbot";
-    mainDiv.appendChild(chatbotDiv);
-  }
+  chatbotDiv = document.createElement("div");
+  chatbotDiv.id = "chatbot";
+  chatbotDiv.className = "chatbot";
+  mainDiv.appendChild(chatbotDiv);
+}
 
-  function down() {
-    let elem = document.getElementById('chat-box');
-    elem.scrollTop = elem.scrollHeight;
-  }
+function down() {
+  let elem = document.getElementById('chat-box');
+  elem.scrollTop = elem.scrollHeight;
+}
