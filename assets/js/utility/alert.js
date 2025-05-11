@@ -57,4 +57,9 @@ function yes() {
     }
   });
 
-  export { yes };
+function errorMessage(message) {
+  let customAlert = new CustomAlert();
+  customAlert.alert(message, "Error!");
+}
+
+export { yes, errorMessage };
