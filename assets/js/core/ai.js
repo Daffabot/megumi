@@ -38,15 +38,14 @@ function fetchAI(strg) {
       alert("maaf AI sedang error");
     });
 }
-  const base = document.getElementById("char");
   const inner = document.getElementsByClassName("active-mic");
   const outter = document.getElementsByClassName("active-outter-mic");
   
-  window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   const recognition = new SpeechRecognition();
-  recognition.interimResults = true;
-  recognition.lang = "id-ID";
+  recognition.lang = 'id-ID';
+  recognition.continuous = false;
+  recognition.interimResults = false;
   
   recognition.addEventListener("result", (e) => {
     const transcript = Array.from(e.results)
