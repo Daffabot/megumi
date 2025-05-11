@@ -1,4 +1,5 @@
 import { app, model } from "./live2d.js";
+import { showAlert } from "../utility/alert.js";
 
 let inputan = document.getElementById("input");
 let go = document.querySelectorAll("#input, .mic, .send");
@@ -85,7 +86,8 @@ try {
   }
 } catch (error) {
   console.warn('Speech recognition error:', error);
-  // Disable mic functionality
+  // Show alert and disable mic
+  showAlert('Browser/Device anda tidak mendukung fitur Voice Recognition', 'error');
   const micButton = document.querySelector('.mic');
   if (micButton) {
     micButton.style.display = 'none';
