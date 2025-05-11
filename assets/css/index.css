@@ -413,7 +413,6 @@ button.mic:disabled {
   width: 80%;
   height: 20%;
   z-index: 10;
-  margin-top: -12vh;
   margin-left: 10vw;
   margin-right: 10vw;
 }
