@@ -86,7 +86,11 @@ try {
   }
 } catch (error) {
   console.warn('Speech recognition error:', error);
-  errorMessage('Browser/Device anda tidak mendukung fitur Voice Recognition');
+  if (typeof errorMessage === 'function') {
+    errorMessage('Browser/Device anda tidak mendukung fitur Voice Recognition');
+  } else {
+    alert('Browser/Device anda tidak mendukung fitur Voice Recognition');
+  }
   const micButton = document.querySelector('.mic');
   if (micButton) {
     micButton.style.display = 'none';
