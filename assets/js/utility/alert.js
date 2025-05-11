@@ -1,42 +1,40 @@
-//Cek user offline/online
+// CustomAlert class definition
+function CustomAlert() {
+  this.alert = function (message, title) {
+    document.body.innerHTML = document.body.innerHTML + '<div id="dialogoverlay"></div><div id="dialogbox" class="slit-in-vertical"><div><div id="dialogboxhead"></div><div id="dialogboxbody"></div><div id="dialogboxfoot"></div></div></div>';
 
-function yes() {
-  document.getElementById("dialogbox").style.display = "none";
-  document.getElementById("dialogoverlay").style.display = "none";
+    let dialogoverlay = document.getElementById("dialogoverlay");
+    let dialogbox = document.getElementById("dialogbox");
+
+    let winH = window.innerHeight;
+    dialogoverlay.style.height = winH + "px";
+
+    dialogbox.style.top = "100px";
+
+    dialogoverlay.style.display = "block";
+    dialogbox.style.display = "block";
+
+    document.getElementById("dialogboxhead").style.display = "block";
+
+    if (typeof title === "undefined") {
+      document.getElementById("dialogboxhead").style.display = "none";
+    } else {
+      document.getElementById("dialogboxhead").innerHTML = '<i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + title;
+    }
+    document.getElementById("dialogboxbody").innerHTML = message;
+    document.getElementById("dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="ok()">OK</button>';
+  };
 }
 
-let customErrorMessage;
+// Global instance
+const customAlert = new CustomAlert();
+
+function errorMessage(message) {
+  customAlert.alert(message, "Error!");
+}
 
 window.addEventListener("DOMContentLoaded", function () {
-  function CustomAlert() {
-    this.alert = function (message, title) {
-      document.body.innerHTML = document.body.innerHTML + '<div id="dialogoverlay"></div><div id="dialogbox" class="slit-in-vertical"><div><div id="dialogboxhead"></div><div id="dialogboxbody"></div><div id="dialogboxfoot"></div></div></div>';
-
-      let dialogoverlay = document.getElementById("dialogoverlay");
-      let dialogbox = document.getElementById("dialogbox");
-
-      let winH = window.innerHeight;
-      dialogoverlay.style.height = winH + "px";
-
-      dialogbox.style.top = "100px";
-
-      dialogoverlay.style.display = "block";
-      dialogbox.style.display = "block";
-
-      document.getElementById("dialogboxhead").style.display = "block";
-
-      if (typeof title === "undefined") {
-        document.getElementById("dialogboxhead").style.display = "none";
-      } else {
-        document.getElementById("dialogboxhead").innerHTML = '<i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + title;
-      }
-      document.getElementById("dialogboxbody").innerHTML = message;
-      document.getElementById("dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="ok()">OK</button>';
-    };
-  }
-
   function checker() {
-    let customAlert = new CustomAlert();
     if (navigator.onLine) {
       console.log("User terhubung dengan koneksi internet");
     } else {
@@ -56,13 +54,13 @@ window.addEventListener("DOMContentLoaded", function () {
     };
   }
 
-  customErrorMessage = function(message) {
-    let customAlert = new CustomAlert();
-    customAlert.alert(message, "Error!");
-  }
-
   let one = once(checker);
   one();
 });
 
-export { yes, customErrorMessage as errorMessage };
+function yes() {
+  document.getElementById("dialogbox").style.display = "none";
+  document.getElementById("dialogoverlay").style.display = "none";
+}
+
+export { yes, errorMessage };
