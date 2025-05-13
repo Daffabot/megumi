@@ -5,27 +5,44 @@ const loader = document.getElementById('loader');
 export let app;
 export let model;
 
-(async function () {
-  // Add WebGL support check
-  if (!PIXI.utils.isWebGLSupported()) {
-    loader.style.display = 'none';
-    errorMessage('WebGL tidak didukung di browser ini. Model Live2D tidak dapat ditampilkan.');
-    return;
+// Add failsafe cleanup
+function cleanupWebGL() {
+  if (app) {
+    app.destroy(true, { children: true, texture: true, baseTexture: true });
   }
+  if (model) {
+    model.destroy();
+  }
+}
 
-  app = new PIXI.Application({
-    backgroundAlpha: 0,
-    view: canvas,
-    powerPreference: "high-performance", // Add power preference
-    preserveDrawingBuffer: true, // Help prevent context loss
-    antialias: true
-  });
-
-  // Add context lost handler
-  canvas.addEventListener('webglcontextlost', handleContextLost, false);
-  canvas.addEventListener('webglcontextrestored', handleContextRestored, false);
-
+(async function () {
   try {
+    // Cleanup any existing instance
+    cleanupWebGL();
+
+    // Force PIXI to use WebGL 1
+    PIXI.settings.PREFER_ENV = PIXI.ENV.WEBGL;
+    
+    if (!PIXI.utils.isWebGLSupported()) {
+      throw new Error('WebGL tidak didukung');
+    }
+
+    app = new PIXI.Application({
+      backgroundAlpha: 0,
+      view: canvas,
+      powerPreference: "default",
+      preserveDrawingBuffer: true,
+      antialias: true,
+      failIfMajorPerformanceCaveat: false,
+      depth: false,
+      stencil: false
+    });
+
+    // Verify context is valid
+    if (!app.renderer.gl || app.renderer.gl.isContextLost()) {
+      throw new Error('WebGL context tidak valid');
+    }
+
     model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
       autoInteract: true,
       motionPreload: MotionPreloadStrategy.IDLE
@@ -44,8 +61,6 @@ export let model;
       if (mousestate) model.focus(clientX, clientY);
     });
 
-    // expressions
-    // interaction
     model.on('hit', (hitAreas) => {
       if (hitAreas.includes('body')) {
         model.motion('tap_body');
@@ -56,77 +71,83 @@ export let model;
     window.MODEL = model;
     window.APP = app;
 
-    // Fit model on model loaded
     fitModel();
     setTimeout(() => fitModel(), 250);
 
-    // Trigger modelLoaded event
     document.dispatchEvent(new CustomEvent('modelLoaded'));
+
   } catch (error) {
-    console.error('Failed to load the model', error);
+    console.error('Model loading failed:', error);
+    cleanupWebGL();
+    errorMessage('Gagal memuat model Live2D. Mohon refresh browser atau gunakan browser lain.');
     loader.style.display = 'none';
   }
 })();
 
-// Add context handlers
+// Modify context handlers
 function handleContextLost(event) {
   event.preventDefault();
-  console.warn('WebGL context lost. Attempting to restore...');
+  console.warn('WebGL context lost');
+  cleanupWebGL();
+  errorMessage('Koneksi WebGL terputus. Mohon refresh halaman.');
 }
 
-async function handleContextRestored() {
-  console.log('WebGL context restored. Reloading model...');
-  try {
-    // Recreate application
-    app.destroy(true);
-    await initializeModel();
-  } catch (error) {
-    console.error('Failed to restore context:', error);
-    loader.style.display = 'none';
-  }
+function handleContextRestored() {
+  location.reload(); // Force page refresh on context restore
 }
 
 async function initializeModel() {
-  app = new PIXI.Application({
-    backgroundAlpha: 0,
-    view: canvas,
-    powerPreference: "high-performance",
-    preserveDrawingBuffer: true,
-    antialias: true
-  });
+  try {
+    cleanupWebGL();
 
-  model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
-    autoInteract: true,
-    motionPreload: MotionPreloadStrategy.IDLE
-  });
+    app = new PIXI.Application({
+      backgroundAlpha: 0,
+      view: canvas,
+      powerPreference: "default",
+      preserveDrawingBuffer: true,
+      antialias: true,
+      failIfMajorPerformanceCaveat: false,
+      depth: false,
+      stencil: false
+    });
 
-  app.stage.addChild(model);
-  fitModel();
-  
-  // Restore event listeners and other setup
-  let mousestate = false;
-  canvas.addEventListener('pointerenter', () => (mousestate = true));
-  canvas.addEventListener('pointerleave', () => {
-    model.internalModel.focusController.focus(0, 0);
-    mousestate = false;
-  });
+    model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
+      autoInteract: true,
+      motionPreload: MotionPreloadStrategy.IDLE
+    });
 
-  canvas.addEventListener('pointermove', ({ clientX, clientY }) => {
-    if (mousestate) model.focus(clientX, clientY);
-  });
+    app.stage.addChild(model);
+    fitModel();
+    
+    let mousestate = false;
+    canvas.addEventListener('pointerenter', () => (mousestate = true));
+    canvas.addEventListener('pointerleave', () => {
+      model.internalModel.focusController.focus(0, 0);
+      mousestate = false;
+    });
 
-  model.on('hit', (hitAreas) => {
-    if (hitAreas.includes('body')) {
-      model.motion('tap_body');
-      console.log("tapped");
-    }
-  });
+    canvas.addEventListener('pointermove', ({ clientX, clientY }) => {
+      if (mousestate) model.focus(clientX, clientY);
+    });
 
-  window.MODEL = model;
-  window.APP = app;
+    model.on('hit', (hitAreas) => {
+      if (hitAreas.includes('body')) {
+        model.motion('tap_body');
+        console.log("tapped");
+      }
+    });
 
-  setTimeout(() => fitModel(), 250);
-  document.dispatchEvent(new CustomEvent('modelLoaded'));
+    window.MODEL = model;
+    window.APP = app;
+
+    setTimeout(() => fitModel(), 250);
+    document.dispatchEvent(new CustomEvent('modelLoaded'));
+  } catch (error) {
+    console.error('Failed to initialize model:', error);
+    cleanupWebGL();
+    errorMessage('Gagal memuat model Live2D. Mohon refresh browser atau gunakan browser lain.');
+    loader.style.display = 'none';
+  }
 }
 
 document.addEventListener('modelLoaded', () => {
@@ -136,27 +157,22 @@ document.addEventListener('modelLoaded', () => {
 
 function fitModel() {
   console.log("im called");
-  // set canvas and renderer before model
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  // Lebar layar tidak masalah pada md dan lg
   if (true) APP.renderer.screen.width = window.innerWidth;
   APP.renderer.screen.height = window.innerHeight;
 
-  // Anchor di tengah untuk semua ukuran layar
   const anchor = {
     x: 0.5,
     y: 0.8
   };
 
-  // Skala tetap sama untuk md dan lg, sedikit lebih kecil untuk sm
   const scale = {
     x: 0.2,
     y: 0.25
   };
 
-  // Posisi x dan y di tengah layar
   const width = APP.renderer.screen.width / 2;
   const height = APP.renderer.screen.height / 2;
 
