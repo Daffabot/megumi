@@ -21,8 +21,18 @@ PIXI.settings.FAIL_IF_MAJOR_PERFORMANCE_CAVEAT = false;
 
 function handleWebGLContextError() {
   cleanupWebGL();
-  errorMessage("WebGL context hilang. Mohon refresh browser anda.");
+  errorMessage("WebGL context hilang. Mohon refresh browser anda atau gunakan browser lain.");
   loader.style.display = 'none';
+  // Remove resize listener when WebGL fails
+  window.removeEventListener('resize', fitModel);
+}
+
+// Add renderer lost listener
+function addRendererListeners() {
+  if (app && app.renderer) {
+    app.renderer.on('webglcontextlost', handleWebGLContextError);
+    app.renderer.on('webglcontextrestored', () => location.reload());
+  }
 }
 
 (async function () {
@@ -48,10 +58,8 @@ function handleWebGLContextError() {
       stencil: false
     });
 
-    // Add error handlers
-    app.renderer.on('context', handleWebGLContextError);
-    canvas.addEventListener('webglcontextlost', handleWebGLContextError);
-    canvas.addEventListener('webglcontextrestored', () => location.reload());
+    // Add renderer listeners right after app creation
+    addRendererListeners();
 
     // Verify context is valid
     if (!app.renderer.gl || app.renderer.gl.isContextLost()) {
@@ -86,6 +94,9 @@ function handleWebGLContextError() {
     window.MODEL = model;
     window.APP = app;
 
+    // Only add resize listener after successful initialization
+    window.addEventListener('resize', fitModel);
+
     fitModel();
     setTimeout(() => fitModel(), 250);
 
@@ -112,10 +123,8 @@ async function initializeModel() {
       stencil: false
     });
 
-    // Add error handlers
-    app.renderer.on('context', handleWebGLContextError);
-    canvas.addEventListener('webglcontextlost', handleWebGLContextError);
-    canvas.addEventListener('webglcontextrestored', () => location.reload());
+    // Add renderer listeners right after app creation
+    addRendererListeners();
 
     model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
       autoInteract: true,
@@ -146,6 +155,9 @@ async function initializeModel() {
     window.MODEL = model;
     window.APP = app;
 
+    // Only add resize listener after successful initialization
+    window.addEventListener('resize', fitModel);
+
     setTimeout(() => fitModel(), 250);
     document.dispatchEvent(new CustomEvent('modelLoaded'));
   } catch (error) {
@@ -160,11 +172,17 @@ document.addEventListener('modelLoaded', () => {
 });
 
 function fitModel() {
+  // Guard against undefined APP/MODEL
+  if (!window.APP || !window.MODEL) {
+    console.warn('APP or MODEL not initialized');
+    return;
+  }
+
   console.log("im called");
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  if (true) APP.renderer.screen.width = window.innerWidth;
+  APP.renderer.screen.width = window.innerWidth;
   APP.renderer.screen.height = window.innerHeight;
 
   const anchor = {
