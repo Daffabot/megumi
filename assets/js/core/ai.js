@@ -149,57 +149,61 @@ let tapMotionTickerFunction = () => app.ticker.add(tapMotion);
 // Menghapus fungsi tapMotion dari ticker
 let removeTapMotion = () => app.ticker.remove(tapMotion);
 
-function speak(string) {
-  console.log("string luarin: ", string);
-  let voiceGetter = setInterval(function () {
-    let voices = window.speechSynthesis.getVoices();
-    if (voices.length !== 0) {
-      console.log("string dalami: ", string);
-      let utterance = new SpeechSynthesisUtterance();
-      window.speechSynthesis.cancel();
-      utterance.text = string;
-      utterance.lang = "id-ID";
-      utterance.volume = 1; //0-1 interval
-      utterance.rate = 0.8;
-      utterance.pitch = 1; //0-2 interval
-      utterance.voice = voices[182];
-      let voiceName = new RegExp("gadis", "i");
-  
-      for (let i = 0; i < window.speechSynthesis.getVoices().length; i++) {
-        if (window.speechSynthesis.getVoices()[i].voiceURI.search(voiceName) != -1) {
-          utterance.voice = window.speechSynthesis.getVoices()[i];
-        }
-      }
-  
-      speechSynthesis.speak(utterance);
-      let r = setInterval(() => {
-        console.log(speechSynthesis.speaking);
-        if (!speechSynthesis.speaking) {
-          clearInterval(r);
-        } else {
-          speechSynthesis.resume();
-        }
-      }, 14000);
-      utterance.addEventListener("start", (e) => {
-        tapMotionTickerFunction();
-        console.log("start speaking");
-        go.forEach((goes) => {
-          goes.disabled = true;
-        });
-      });
-      utterance.addEventListener("end", (e) => {
-        removeTapMotion();
-        go.forEach((goes) => {
-          goes.disabled = false;
-        });
-        chatbotDiv.id = "chatbot" + count;
-        userDiv.id = "user" + count;
-        console.log("Utterance has finished being spoken after " + e.elapsedTime + " milliseconds.");
-        inputan.value = "";
-      });
-      clearInterval(voiceGetter);
+async function speak(text) {
+  try {
+    // TTS API endpoint
+    const url = "https://toneva-tts.up.railway.app/tts/stream";
+
+    // Request body, bisa diubah sesuai kebutuhan
+    const body = {
+      text: text,
+      speaker: 1,
+      outputFormat: "wav",
+      pitch: 0,
+      intonationScale: 1.0,
+      speed: 1.0
+    };
+
+    // Fetch audio from TTS API
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      throw new Error("TTS API error");
     }
-  }, 200);
+
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: "audio/wav" });
+    const audioUrl = URL.createObjectURL(blob);
+
+    // Play audio
+    const audio = new Audio(audioUrl);
+    audio.play();
+
+    // Optional: handle UI state during playback
+    audio.addEventListener("play", () => {
+      tapMotionTickerFunction();
+      go.forEach((goes) => {
+        goes.disabled = true;
+      });
+    });
+    audio.addEventListener("ended", () => {
+      removeTapMotion();
+      go.forEach((goes) => {
+        goes.disabled = false;
+      });
+      chatbotDiv.id = "chatbot" + count;
+      userDiv.id = "user" + count;
+      inputan.value = "";
+    });
+
+  } catch (err) {
+    console.error("TTS error:", err);
+    warningMessage("Gagal memutar suara TTS.");
+  }
 }
 
 //Menambahkan bubble text

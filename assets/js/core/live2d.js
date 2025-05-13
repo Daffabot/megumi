@@ -22,17 +22,29 @@ PIXI.settings.FAIL_IF_MAJOR_PERFORMANCE_CAVEAT = false;
 function handleWebGLContextError(event) {
   if (event && event.preventDefault) event.preventDefault();
   cleanupWebGL();
-  errorMessage("WebGL context hilang. Mohon refresh browser anda atau gunakan browser lain.");
-  loader.style.display = 'none';
+  errorMessage("WebGL context hilang. Mohon tunggu, sedang mencoba memulihkan...");
+  loader.style.display = 'block';
   // Remove resize listener when WebGL fails
   window.removeEventListener('resize', fitModel);
+}
+
+// Handler untuk context restored
+async function handleWebGLContextRestored(event) {
+  // Bersihkan dan inisialisasi ulang model
+  try {
+    await initializeModel();
+    loader.style.display = 'none';
+    errorMessage("WebGL berhasil dipulihkan. Model telah dimuat ulang.");
+  } catch (e) {
+    errorMessage("Gagal memulihkan WebGL. Silakan refresh browser.");
+  }
 }
 
 // Add renderer lost listener
 function addRendererListeners() {
   if (app && app.renderer) {
     app.renderer.on('webglcontextlost', handleWebGLContextError);
-    app.renderer.on('webglcontextrestored', () => location.reload());
+    app.renderer.on('webglcontextrestored', handleWebGLContextRestored);
   }
 }
 
@@ -64,7 +76,7 @@ function addRendererListeners() {
 
     // Tambahkan event listener pada canvas dengan passive: false
     canvas.addEventListener('webglcontextlost', handleWebGLContextError, { passive: false });
-    canvas.addEventListener('webglcontextrestored', () => location.reload());
+    canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored, { passive: false });
 
     // Verify context is valid
     if (!app.renderer.gl || app.renderer.gl.isContextLost()) {
@@ -133,7 +145,7 @@ async function initializeModel() {
 
     // Tambahkan event listener pada canvas dengan passive: false
     canvas.addEventListener('webglcontextlost', handleWebGLContextError, { passive: false });
-    canvas.addEventListener('webglcontextrestored', () => location.reload());
+    canvas.addEventListener('webglcontextrestored', handleWebGLContextRestored, { passive: false });
 
     model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
       autoInteract: true,
@@ -181,9 +193,9 @@ document.addEventListener('modelLoaded', () => {
 });
 
 function fitModel() {
-  // Guard against undefined APP/MODEL
-  if (!window.APP || !window.MODEL) {
-    console.warn('APP or MODEL not initialized');
+  // Guard against undefined APP/MODEL and ensure model is ready
+  if (!window.APP || !window.MODEL || typeof window.MODEL.update !== "function") {
+    console.warn('APP or MODEL not initialized or not ready');
     return;
   }
 
