@@ -152,25 +152,26 @@ let removeTapMotion = () => app.ticker.remove(tapMotion);
 async function speak(text) {
   const API_URL = "https://toneva-tts.up.railway.app";
   try {
+    // Kirim request ke endpoint /tts
     const response = await fetch(`${API_URL}/tts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
         text: text,
-        speaker: 1 // Ganti jika ingin speaker lain
+        speaker: 1 // ganti jika ingin speaker lain
       })
     });
 
-    // Cek error rate limit
     if (response.status === 429) {
-      warningMessage("TTS rate limit, silakan coba beberapa saat lagi.");
+      warningMessage("Terlalu banyak permintaan ke TTS. Silakan coba lagi nanti.");
       return;
     }
 
-    // Cek response JSON
     const result = await response.json();
 
-    if (result.success && result.filename) {
+    if (result.success) {
       const audioUrl = `${API_URL}/download/${result.filename}`;
       const audio = new Audio(audioUrl);
       audio.play();
@@ -191,16 +192,14 @@ async function speak(text) {
         inputan.value = "";
       });
     } else {
-      // Tampilkan error detail dari API jika ada
-      warningMessage("TTS gagal: " + (result.error || "Unknown error"));
-      console.error("TTS API error:", result);
+      warningMessage(`TTS Error: ${result.error || "Tidak diketahui"}`);
     }
   } catch (error) {
     if (error.message && error.message.includes('429')) {
-      warningMessage("TTS rate limit, silakan coba beberapa saat lagi.");
+      warningMessage("Terlalu banyak permintaan ke TTS. Silakan coba lagi nanti.");
     }
     console.error('TTS error:', error);
-    warningMessage("Gagal memproses TTS: " + error.message);
+    warningMessage(`TTS Error: ${error.message}`);
   }
 }
 
