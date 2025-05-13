@@ -150,59 +150,56 @@ let tapMotionTickerFunction = () => app.ticker.add(tapMotion);
 let removeTapMotion = () => app.ticker.remove(tapMotion);
 
 async function speak(text) {
+  const API_URL = "https://toneva-tts.up.railway.app";
   try {
-    // TTS API endpoint
-    const url = "https://toneva-tts.up.railway.app/tts/stream";
-
-    // Request body, bisa diubah sesuai kebutuhan
-    const body = {
-      text: text,
-      speaker: 1,
-      outputFormat: "wav",
-      pitch: 0,
-      intonationScale: 1.0,
-      speed: 1.0
-    };
-
-    // Fetch audio from TTS API
-    const response = await fetch(url, {
+    // Kirim request ke endpoint /tts
+    const response = await fetch(`${API_URL}/tts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        text: text,
+        speaker: 1 // ganti jika ingin speaker lain
+      })
     });
 
-    if (!response.ok) {
-      throw new Error("TTS API error");
+    if (response.status === 429) {
+      warningMessage("Terlalu banyak permintaan ke TTS. Silakan coba lagi nanti.");
+      return;
     }
 
-    const arrayBuffer = await response.arrayBuffer();
-    const blob = new Blob([arrayBuffer], { type: "audio/wav" });
-    const audioUrl = URL.createObjectURL(blob);
+    const result = await response.json();
 
-    // Play audio
-    const audio = new Audio(audioUrl);
-    audio.play();
+    if (result.success) {
+      const audioUrl = `${API_URL}/download/${result.filename}`;
+      const audio = new Audio(audioUrl);
+      audio.play();
 
-    // Optional: handle UI state during playback
-    audio.addEventListener("play", () => {
-      tapMotionTickerFunction();
-      go.forEach((goes) => {
-        goes.disabled = true;
+      audio.addEventListener("play", () => {
+        tapMotionTickerFunction();
+        go.forEach((goes) => {
+          goes.disabled = true;
+        });
       });
-    });
-    audio.addEventListener("ended", () => {
-      removeTapMotion();
-      go.forEach((goes) => {
-        goes.disabled = false;
+      audio.addEventListener("ended", () => {
+        removeTapMotion();
+        go.forEach((goes) => {
+          goes.disabled = false;
+        });
+        chatbotDiv.id = "chatbot" + count;
+        userDiv.id = "user" + count;
+        inputan.value = "";
       });
-      chatbotDiv.id = "chatbot" + count;
-      userDiv.id = "user" + count;
-      inputan.value = "";
-    });
-
-  } catch (err) {
-    console.error("TTS error:", err);
-    warningMessage("Gagal memutar suara TTS.");
+    } else {
+      warningMessage(`TTS Error: ${result.error || "Tidak diketahui"}`);
+    }
+  } catch (error) {
+    if (error.message && error.message.includes('429')) {
+      warningMessage("Terlalu banyak permintaan ke TTS. Silakan coba lagi nanti.");
+    }
+    console.error('TTS error:', error);
+    warningMessage(`TTS Error: ${error.message}`);
   }
 }
 
