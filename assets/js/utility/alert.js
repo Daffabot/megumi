@@ -1,6 +1,27 @@
 // CustomAlert class definition
 function CustomAlert() {
+  this.messageQueue = [];
+  this.isShowing = false;
+
   this.alert = function (message, title) {
+    // Add message to queue
+    this.messageQueue.push({ message, title });
+    
+    // If not currently showing an alert, show the next one
+    if (!this.isShowing) {
+      this.showNext();
+    }
+  };
+
+  this.showNext = function() {
+    if (this.messageQueue.length === 0) {
+      this.isShowing = false;
+      return;
+    }
+
+    this.isShowing = true;
+    const { message, title } = this.messageQueue[0];
+
     document.body.innerHTML = document.body.innerHTML + '<div id="dialogoverlay"></div><div id="dialogbox" class="slit-in-vertical"><div><div id="dialogboxhead"></div><div id="dialogboxbody"></div><div id="dialogboxfoot"></div></div></div>';
 
     let dialogoverlay = document.getElementById("dialogoverlay");
@@ -8,7 +29,6 @@ function CustomAlert() {
 
     let winH = window.innerHeight;
     dialogoverlay.style.height = winH + "px";
-
     dialogbox.style.top = "100px";
 
     dialogoverlay.style.display = "block";
@@ -22,7 +42,18 @@ function CustomAlert() {
       document.getElementById("dialogboxhead").innerHTML = '<i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + title;
     }
     document.getElementById("dialogboxbody").innerHTML = message;
-    document.getElementById("dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="ok()">OK</button>';
+    document.getElementById("dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="yes()">OK</button>';
+  };
+
+  this.close = function() {
+    document.getElementById("dialogbox").style.display = "none";
+    document.getElementById("dialogoverlay").style.display = "none";
+    
+    // Remove the shown message from queue
+    this.messageQueue.shift();
+    
+    // Show next message if any
+    setTimeout(() => this.showNext(), 300);
   };
 }
 
@@ -63,8 +94,7 @@ window.addEventListener("DOMContentLoaded", function () {
 });
 
 function yes() {
-  document.getElementById("dialogbox").style.display = "none";
-  document.getElementById("dialogoverlay").style.display = "none";
+  customAlert.close();
 }
 
 export { yes, errorMessage, warningMessage };
