@@ -19,7 +19,8 @@ function cleanupWebGL() {
 PIXI.utils.skipHello();
 PIXI.settings.FAIL_IF_MAJOR_PERFORMANCE_CAVEAT = false;
 
-function handleWebGLContextError() {
+function handleWebGLContextError(event) {
+  if (event && event.preventDefault) event.preventDefault();
   cleanupWebGL();
   errorMessage("WebGL context hilang. Mohon refresh browser anda atau gunakan browser lain.");
   loader.style.display = 'none';
@@ -60,6 +61,10 @@ function addRendererListeners() {
 
     // Add renderer listeners right after app creation
     addRendererListeners();
+
+    // Tambahkan event listener pada canvas dengan passive: false
+    canvas.addEventListener('webglcontextlost', handleWebGLContextError, { passive: false });
+    canvas.addEventListener('webglcontextrestored', () => location.reload());
 
     // Verify context is valid
     if (!app.renderer.gl || app.renderer.gl.isContextLost()) {
@@ -125,6 +130,10 @@ async function initializeModel() {
 
     // Add renderer listeners right after app creation
     addRendererListeners();
+
+    // Tambahkan event listener pada canvas dengan passive: false
+    canvas.addEventListener('webglcontextlost', handleWebGLContextError, { passive: false });
+    canvas.addEventListener('webglcontextrestored', () => location.reload());
 
     model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
       autoInteract: true,
