@@ -1,5 +1,5 @@
 import { app, model } from "./live2d.js";
-import { errorMessage } from "../utility/alert.js";
+import { errorMessage, warningMessage } from "../utility/alert.js";
 
 let inputan = document.getElementById("input");
 let go = document.querySelectorAll("#input, .mic, .send");
@@ -35,8 +35,7 @@ function fetchAI(strg) {
     })
     .catch(error => {
       console.error('Fetch error:', error);
-      //sementara
-      alert("maaf AI sedang error");
+      warningMessage("Maaf AI sedang error");
     });
 }
 

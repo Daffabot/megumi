@@ -33,12 +33,16 @@ function errorMessage(message) {
   customAlert.alert(message, "Error!");
 }
 
+function warningMessage(message) {
+  customAlert.alert(message, "Peringatan!");
+}
+
 window.addEventListener("DOMContentLoaded", function () {
   function checker() {
     if (navigator.onLine) {
       console.log("User terhubung dengan koneksi internet");
     } else {
-      customAlert.alert("Tolong cek koneksi internet anda, beberapa fitur mungkin tidak akan berfungsi.", "Peringatan!");
+      warningMessage("Tolong cek koneksi internet anda, beberapa fitur mungkin tidak akan berfungsi.");
       console.log("Anda offline");
     }
   }
@@ -63,4 +67,4 @@ function yes() {
   document.getElementById("dialogoverlay").style.display = "none";
 }
 
-export { yes, errorMessage };
+export { yes, errorMessage, warningMessage };
