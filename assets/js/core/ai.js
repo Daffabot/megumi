@@ -152,17 +152,13 @@ let removeTapMotion = () => app.ticker.remove(tapMotion);
 async function speak(text) {
   const API_URL = "https://toneva-tts.up.railway.app";
   try {
-    // Tampilkan loading jika ingin (opsional)
-    // document.getElementById('loading').style.display = 'block';
-
+    // Kirim request ke endpoint /tts
     const response = await fetch(`${API_URL}/tts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text: text,
-        speaker: 1 // ganti jika ingin speaker lain
+        speaker: 1 // Ganti jika ingin speaker lain
       })
     });
 
@@ -194,7 +190,7 @@ async function speak(text) {
         inputan.value = "";
       });
     } else {
-      warningMessage(`TTS Error: ${result.error || "Tidak diketahui"}`);
+      warningMessage("TTS gagal: " + (result.error || "Unknown error"));
     }
   } catch (error) {
     if (error.message && error.message.includes('429')) {
@@ -202,8 +198,6 @@ async function speak(text) {
     }
     console.error('TTS error:', error);
     warningMessage("Gagal memutar suara TTS.");
-  } finally {
-    // document.getElementById('loading').style.display = 'none';
   }
 }
 
