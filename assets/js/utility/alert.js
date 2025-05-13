@@ -42,7 +42,7 @@ function CustomAlert() {
       document.getElementById("dialogboxhead").innerHTML = '<i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + title;
     }
     document.getElementById("dialogboxbody").innerHTML = message;
-    document.getElementById("dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="yes()">OK</button>';
+    document.getElementById("dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="window.yes()">OK</button>';
   };
 
   this.close = function() {
@@ -93,8 +93,13 @@ window.addEventListener("DOMContentLoaded", function () {
   one();
 });
 
+// Make yes function globally available
 function yes() {
   customAlert.close();
 }
 
-export { yes, errorMessage, warningMessage };
+// Add to window object
+window.yes = yes;
+
+// Export without yes since we made it global
+export { errorMessage, warningMessage };

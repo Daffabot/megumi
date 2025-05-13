@@ -4,7 +4,6 @@
 
 import "./core/live2d.js";
 import "./core/ai.js";
-import { yes } from "./utility/alert.js";
 
 const ok = () => {
     yes();
