@@ -15,6 +15,16 @@ function cleanupWebGL() {
   }
 }
 
+// Add WebGL context error monitoring
+PIXI.utils.skipHello();
+PIXI.settings.FAIL_IF_MAJOR_PERFORMANCE_CAVEAT = false;
+
+function handleWebGLContextError() {
+  cleanupWebGL();
+  errorMessage("WebGL context hilang. Mohon refresh browser anda.");
+  loader.style.display = 'none';
+}
+
 (async function () {
   try {
     // Cleanup any existing instance
@@ -38,9 +48,10 @@ function cleanupWebGL() {
       stencil: false
     });
 
-    // Add event listeners for WebGL context
-    canvas.addEventListener('webglcontextlost', handleContextLost);
-    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+    // Add error handlers
+    app.renderer.on('context', handleWebGLContextError);
+    canvas.addEventListener('webglcontextlost', handleWebGLContextError);
+    canvas.addEventListener('webglcontextrestored', () => location.reload());
 
     // Verify context is valid
     if (!app.renderer.gl || app.renderer.gl.isContextLost()) {
@@ -82,23 +93,9 @@ function cleanupWebGL() {
 
   } catch (error) {
     console.error('Model loading failed:', error);
-    cleanupWebGL();
-    errorMessage('Gagal memuat model Live2D. Mohon refresh browser atau gunakan browser lain.');
-    loader.style.display = 'none';
+    handleWebGLContextError();
   }
 })();
-
-// Modify context handlers
-function handleContextLost(event) {
-  event.preventDefault();
-  console.warn('WebGL context lost');
-  cleanupWebGL();
-  errorMessage('Koneksi WebGL terputus. Mohon refresh halaman.');
-}
-
-function handleContextRestored() {
-  location.reload(); // Force page refresh on context restore
-}
 
 async function initializeModel() {
   try {
@@ -115,9 +112,10 @@ async function initializeModel() {
       stencil: false
     });
 
-    // Add event listeners for WebGL context
-    canvas.addEventListener('webglcontextlost', handleContextLost);
-    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+    // Add error handlers
+    app.renderer.on('context', handleWebGLContextError);
+    canvas.addEventListener('webglcontextlost', handleWebGLContextError);
+    canvas.addEventListener('webglcontextrestored', () => location.reload());
 
     model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
       autoInteract: true,
@@ -152,9 +150,7 @@ async function initializeModel() {
     document.dispatchEvent(new CustomEvent('modelLoaded'));
   } catch (error) {
     console.error('Failed to initialize model:', error);
-    cleanupWebGL();
-    errorMessage('Gagal memuat model Live2D. Mohon refresh browser atau gunakan browser lain.');
-    loader.style.display = 'none';
+    handleWebGLContextError();
   }
 }
 
