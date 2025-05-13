@@ -45,6 +45,14 @@ function checkSpeechRecognitionSupport() {
   return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition);
 }
 
+// Tambahkan fungsi untuk menghilangkan loader
+function hideLoader() {
+  const loader = document.getElementById('loader');
+  if (loader) {
+    loader.style.display = 'none';
+  }
+}
+
 const inner = document.getElementsByClassName("active-mic");
 const outter = document.getElementsByClassName("active-outter-mic");
 
@@ -84,6 +92,20 @@ try {
   } 
 } catch (error) {
   console.warn('Speech recognition not available:', error);
+} finally {
+  // Selalu hilangkan loader apapun hasilnya
+  hideLoader();
+  
+  // Handle UI untuk speech recognition tidak tersedia
+  if (!recognition) {
+    const micButton = document.querySelector('.mic');
+    if (micButton) {
+      micButton.style.display = 'none';
+    }
+    if (typeof errorMessage === 'function') {
+      errorMessage('Browser/Device anda tidak mendukung fitur Voice Recognition');
+    }
+  }
 }
 
 // Sembunyikan mic button jika recognition tidak tersedia
