@@ -38,6 +38,10 @@ function cleanupWebGL() {
       stencil: false
     });
 
+    // Add event listeners for WebGL context
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+
     // Verify context is valid
     if (!app.renderer.gl || app.renderer.gl.isContextLost()) {
       throw new Error('WebGL context tidak valid');
@@ -110,6 +114,10 @@ async function initializeModel() {
       depth: false,
       stencil: false
     });
+
+    // Add event listeners for WebGL context
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
 
     model = await Live2DModel.from('assets/live2d/shizuku.model.json', {
       autoInteract: true,
