@@ -45,23 +45,15 @@ function checkSpeechRecognitionSupport() {
   return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition);
 }
 
-// Tambahkan fungsi untuk menghilangkan loader
-function hideLoader() {
-  const loader = document.getElementById('loader');
-  if (loader) {
-    loader.style.display = 'none';
-  }
-}
-
 const inner = document.getElementsByClassName("active-mic");
 const outter = document.getElementsByClassName("active-outter-mic");
 
 let recognition = null;
 
-try {
-  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
-  
-  if (SpeechRecognitionAPI) {
+// Check support before trying to initialize
+if (checkSpeechRecognitionSupport()) {
+  try {
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
     recognition = new SpeechRecognitionAPI();
     recognition.lang = 'id-ID';
     recognition.continuous = false;
@@ -89,43 +81,33 @@ try {
       inner[0].classList.add("none");
       outter[0].classList.add("none");
     });
-  } 
-} catch (error) {
-  console.warn('Speech recognition not available:', error);
-} finally {
-  // Selalu hilangkan loader apapun hasilnya
-  hideLoader();
-  
-  // Handle UI untuk speech recognition tidak tersedia
-  if (!recognition) {
-    const micButton = document.querySelector('.mic');
-    if (micButton) {
-      micButton.style.display = 'none';
-    }
-    if (typeof errorMessage === 'function') {
-      errorMessage('Browser/Device anda tidak mendukung fitur Voice Recognition');
-    }
+  } catch (error) {
+    console.warn('Speech recognition error:', error);
+  }
+} else {
+  console.warn('Speech recognition not supported in this browser');
+}
+
+// Handle UI for unsupported speech recognition
+if (!recognition) {
+  const micButton = document.querySelector('.mic');
+  if (micButton) {
+    micButton.style.display = 'none';
+  }
+  if (typeof errorMessage === 'function') {
+    errorMessage('Browser/Device anda tidak mendukung fitur Voice Recognition');
   }
 }
 
-// Sembunyikan mic button jika recognition tidak tersedia
-const micButton = document.querySelector('.mic');
-if (!recognition && micButton) {
-  micButton.style.display = 'none';
-  errorMessage('Voice Recognition tidak tersedia di browser ini');
-}
-
-// Modify button click handler to work without speech recognition
+// Modify button click handler to check if recognition exists
 const buttons = document.querySelectorAll(".mic, .send");
 buttons.forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.className === "mic") {
-      if (recognition) {
-        recognition.start();
-        go.forEach((goes) => {
-          goes.disabled = true;
-        });
-      }
+    if (button.className === "mic" && recognition) {
+      recognition.start();
+      go.forEach((goes) => {
+        goes.disabled = true;
+      });
     } else if (button.className === "send" && inputan.value.trim() !== '') {
       addChatbot();
       fetchAI(inputan.value);
