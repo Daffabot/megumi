@@ -81,32 +81,29 @@ try {
       inner[0].classList.add("none");
       outter[0].classList.add("none");
     });
-  } else {
-    throw new Error('Speech recognition not supported in this browser');
-  }
+  } 
 } catch (error) {
-  console.warn('Speech recognition error:', error);
-  if (typeof errorMessage === 'function') {
-    errorMessage('Browser/Device anda tidak mendukung fitur Voice Recognition');
-  } else {
-    console.log(errorMessage);
-    alert('Browser/Device anda tidak mendukung fitur Voice Recognition');
-  }
-  const micButton = document.querySelector('.mic');
-  if (micButton) {
-    micButton.style.display = 'none';
-  }
+  console.warn('Speech recognition not available:', error);
 }
 
-// Modify button click handler to check if recognition exists
+// Sembunyikan mic button jika recognition tidak tersedia
+const micButton = document.querySelector('.mic');
+if (!recognition && micButton) {
+  micButton.style.display = 'none';
+  errorMessage('Voice Recognition tidak tersedia di browser ini');
+}
+
+// Modify button click handler to work without speech recognition
 const buttons = document.querySelectorAll(".mic, .send");
 buttons.forEach((button) => {
   button.addEventListener("click", () => {
-    if (button.className === "mic" && recognition) {
-      recognition.start();
-      go.forEach((goes) => {
-        goes.disabled = true;
-      });
+    if (button.className === "mic") {
+      if (recognition) {
+        recognition.start();
+        go.forEach((goes) => {
+          goes.disabled = true;
+        });
+      }
     } else if (button.className === "send" && inputan.value.trim() !== '') {
       addChatbot();
       fetchAI(inputan.value);
