@@ -1,4 +1,5 @@
 import { app, model } from "./live2d.js";
+import { errorMessage, warningMessage } from "../utility/alert.js";
 
 let inputan = document.getElementById("input");
 let go = document.querySelectorAll("#input, .mic, .send");
@@ -35,40 +36,48 @@ function fetchAI(strg) {
     .catch(error => {
       console.error('Fetch error:', error);
       //sementara
-      alert("maaf AI sedang error");
+      errorMessage("maaf AI sedang sibuk");
     });
 }
-  const base = document.getElementById("char");
+  // const base = document.getElementById("char");
   const inner = document.getElementsByClassName("active-mic");
   const outter = document.getElementsByClassName("active-outter-mic");
   
   window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  
-  const recognition = new SpeechRecognition();
-  recognition.interimResults = true;
-  recognition.lang = "id-ID";
-  
-  recognition.addEventListener("result", (e) => {
-    const transcript = Array.from(e.results)
-      .map((result) => result[0])
-      .map((result) => result.transcript)
-      .join("");
-  
-    inputan.value = transcript;
-    console.log(transcript);
-  });
-  recognition.addEventListener("start", (e) => {
-    inner[0].classList.remove("none");
-    outter[0].classList.remove("none");
-  });
-  recognition.addEventListener("end", (e) => {
-    addChatbot();
-    document.getElementById("user").innerHTML = '<div class="label">User</div><div class="sub">' + inputan.value + '</div>';
-    down();
-    fetchAI(inputan.value);
-    inner[0].classList.add("none");
-    outter[0].classList.add("none");
-  });
+  let recognition = null;
+
+  if (window.SpeechRecognition) {
+    let recognition = new SpeechRecognition();
+    recognition.interimResults = true;
+    recognition.lang = "id-ID";
+    
+    recognition.addEventListener("result", (e) => {
+      const transcript = Array.from(e.results)
+        .map((result) => result[0])
+        .map((result) => result.transcript)
+        .join("");
+    
+      inputan.value = transcript;
+      console.log(transcript);
+    });
+    recognition.addEventListener("start", (e) => {
+      inner[0].classList.remove("none");
+      outter[0].classList.remove("none");
+    });
+    recognition.addEventListener("end", (e) => {
+      addChatbot();
+      document.getElementById("user").innerHTML = '<div class="label">User</div><div class="sub">' + inputan.value + '</div>';
+      down();
+      fetchAI(inputan.value);
+      inner[0].classList.add("none");
+      outter[0].classList.add("none");
+    });
+  } else {
+    alert("Browser tidak mendukung SpeechRecognition");
+    console.warn("Browser tidak mendukung SpeechRecognition");
+    // Bisa tampilkan pesan fallback atau sembunyikan tombol mic
+    document.querySelector(".mic").style.display = "none";
+  }
   
   const buttons = document.querySelectorAll(".mic, .send");
   buttons.forEach((button) => {
