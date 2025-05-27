@@ -47,7 +47,7 @@ function fetchAI(strg) {
   let recognition = null;
 
   if (window.SpeechRecognition) {
-    let recognition = new SpeechRecognition();
+    recognition = new SpeechRecognition();
     recognition.interimResults = true;
     recognition.lang = "id-ID";
     
