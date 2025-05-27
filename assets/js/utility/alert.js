@@ -22,27 +22,44 @@ function CustomAlert() {
     this.isShowing = true;
     const { message, title } = this.messageQueue[0];
 
-    document.body.innerHTML = document.body.innerHTML + '<div id="dialogoverlay"></div><div id="dialogbox" class="slit-in-vertical"><div><div id="dialogboxhead"></div><div id="dialogboxbody"></div><div id="dialogboxfoot"></div></div></div>';
+    // Hapus dialog lama jika ada
+    const oldOverlay = document.getElementById("dialogoverlay");
+    const oldBox = document.getElementById("dialogbox");
+    if (oldOverlay) oldOverlay.remove();
+    if (oldBox) oldBox.remove();
 
-    let dialogoverlay = document.getElementById("dialogoverlay");
-    let dialogbox = document.getElementById("dialogbox");
+    // Buat overlay dan dialogbox tanpa menghapus isi body
+    const overlay = document.createElement("div");
+    overlay.id = "dialogoverlay";
+    const dialogbox = document.createElement("div");
+    dialogbox.id = "dialogbox";
+    dialogbox.className = "slit-in-vertical";
+    dialogbox.innerHTML = `
+      <div>
+        <div id="dialogboxhead"></div>
+        <div id="dialogboxbody"></div>
+        <div id="dialogboxfoot"></div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.body.appendChild(dialogbox);
 
     let winH = window.innerHeight;
-    dialogoverlay.style.height = winH + "px";
+    overlay.style.height = winH + "px";
     dialogbox.style.top = "100px";
 
-    dialogoverlay.style.display = "block";
+    overlay.style.display = "block";
     dialogbox.style.display = "block";
 
-    document.getElementById("dialogboxhead").style.display = "block";
-
+    const head = dialogbox.querySelector("#dialogboxhead");
     if (typeof title === "undefined") {
-      document.getElementById("dialogboxhead").style.display = "none";
+      head.style.display = "none";
     } else {
-      document.getElementById("dialogboxhead").innerHTML = '<i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + title;
+      head.style.display = "block";
+      head.innerHTML = '<i class="fa fa-exclamation-circle" aria-hidden="true"></i> ' + title;
     }
-    document.getElementById("dialogboxbody").innerHTML = message;
-    document.getElementById("dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="window.yes()">OK</button>';
+    dialogbox.querySelector("#dialogboxbody").innerHTML = message;
+    dialogbox.querySelector("#dialogboxfoot").innerHTML = '<button class="pure-material-button-contained" id="closed" onclick="window.yes()">OK</button>';
   };
 
   this.close = function() {
