@@ -73,7 +73,7 @@ function fetchAI(strg) {
       outter[0].classList.add("none");
     });
   } else {
-    alert("Browser tidak mendukung SpeechRecognition");
+    warningMessage("Browser tidak mendukung SpeechRecognition");
     console.warn("Browser tidak mendukung SpeechRecognition");
     // Bisa tampilkan pesan fallback atau sembunyikan tombol mic
     document.querySelector(".mic").style.display = "none";
