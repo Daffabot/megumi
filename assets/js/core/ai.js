@@ -129,52 +129,64 @@ function fetchAI(strg) {
   // Menghapus fungsi tapMotion dari ticker
   let removeTapMotion = () => app.ticker.remove(tapMotion);
 
-  async function speak(text) {
-    const API_URL = "https://toneva-tts.up.railway.app/tts/stream";
+  // Tambahkan variabel global untuk audio
+let currentAudio = null;
+
+async function speak(text) {
+  const API_URL = "https://toneva-tts.up.railway.app/tts/stream";
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: text,
+        speaker: 1,
+        outputFormat: "wav"
+      })
+    });
+
+    if (response.status === 429) {
+      warningMessage("TTS rate limit, silakan coba beberapa saat lagi.");
+      return;
+    }
+    if (!response.ok) {
+      warningMessage("TTS gagal: " + response.statusText);
+      return;
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: "audio/wav" });
+    const audioUrl = URL.createObjectURL(blob);
+    // Simpan audio ke variabel global
+    currentAudio = new Audio(audioUrl);
+    const audio = currentAudio;
+    let played = false; // Tambahkan flag
+
+    audio.addEventListener("play", () => {
+      played = true; // Set flag saat audio mulai diputar
+      tapMotionTickerFunction();
+      go.forEach((goes) => {
+        goes.disabled = true;
+      });
+    });
+    audio.addEventListener("ended", () => {
+      removeTapMotion();
+      go.forEach((goes) => {
+        goes.disabled = false;
+      });
+      chatbotDiv.id = "chatbot" + count;
+      userDiv.id = "user" + count;
+      inputan.value = "";
+      // Hapus referensi audio setelah selesai
+      currentAudio = null;
+    });
+
     try {
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: text,
-          speaker: 1,
-          outputFormat: "wav"
-        })
-      });
-
-      if (response.status === 429) {
-        warningMessage("TTS rate limit, silakan coba beberapa saat lagi.");
-        return;
-      }
-      if (!response.ok) {
-        warningMessage("TTS gagal: " + response.statusText);
-        return;
-      }
-
-      const arrayBuffer = await response.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: "audio/wav" });
-      const audioUrl = URL.createObjectURL(blob);
-      const audio = new Audio(audioUrl);
-
-      audio.addEventListener("play", () => {
-        tapMotionTickerFunction();
-        go.forEach((goes) => {
-          goes.disabled = true;
-        });
-      });
-      audio.addEventListener("ended", () => {
-        removeTapMotion();
-        go.forEach((goes) => {
-          goes.disabled = false;
-        });
-        chatbotDiv.id = "chatbot" + count;
-        userDiv.id = "user" + count;
-        inputan.value = "";
-      });
-
-      try {
-        await audio.play();
-      } catch (err) {
+      await audio.play();
+    } catch (err) {
+      // Hanya tampilkan warning jika audio belum diputar sama sekali
+      if (!played) {
+        console.log(err.message);
         warningMessage("Klik di mana saja untuk memutar suara.");
         const resumeAudio = () => {
           audio.play().catch(() => {
@@ -186,18 +198,19 @@ function fetchAI(strg) {
         window.addEventListener("click", resumeAudio);
         window.addEventListener("touchstart", resumeAudio);
       }
-    } catch (error) {
-      if (error.message && error.message.includes('429')) {
-        warningMessage("TTS rate limit, silakan coba beberapa saat lagi.");
-      }
-      console.error('TTS error:', error);
-      warningMessage("Gagal memproses TTS: " + error.message);
-      removeTapMotion();
-      go.forEach((goes) => {
-        goes.disabled = false;
-      });
     }
+  } catch (error) {
+    if (error.message && error.message.includes('429')) {
+      warningMessage("TTS rate limit, silakan coba beberapa saat lagi.");
+    }
+    console.error('TTS error:', error);
+    warningMessage("Gagal memproses TTS: " + error.message);
+    removeTapMotion();
+    go.forEach((goes) => {
+      goes.disabled = false;
+    });
   }
+}
 
   //Menambahkan bubble text
   const mainDiv = document.getElementById("chat-box");
