@@ -73,7 +73,10 @@ function fetchAI(strg) {
       outter[0].classList.add("none");
     });
   } else {
-    warningMessage("Browser tidak mendukung SpeechRecognition");
+    // Gunakan setTimeout agar warningMessage tidak mengganggu proses load Live2D
+    setTimeout(() => {
+      warningMessage("Browser tidak mendukung SpeechRecognition");
+    }, 500);
     console.warn("Browser tidak mendukung SpeechRecognition");
     // Bisa tampilkan pesan fallback atau sembunyikan tombol mic
     document.querySelector(".mic").style.display = "none";
